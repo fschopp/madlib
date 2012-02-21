@@ -43,3 +43,32 @@ AS $$
         'C compiler: __MADLIB_C_COMPILER__, '
         'C++ compiler: __MADLIB_CXX_COMPILER__')::TEXT
 $$;
+
+
+/**
+ * @brief Raise an exception if the given condition is not satisfied.
+ */
+CREATE FUNCTION MADLIB_SCHEMA.assert(condition BOOLEAN, msg VARCHAR)
+RETURNS VOID
+LANGUAGE plpgsql
+IMMUTABLE
+AS $$
+BEGIN
+    IF NOT condition THEN
+        RAISE EXCEPTION 'Failed assertion: %', msg;
+    END IF;
+END
+$$;
+
+
+/**
+ * @brief Compute the relative error of an approximate value
+ */
+CREATE FUNCTION MADLIB_SCHEMA.relative_error(
+    approx DOUBLE PRECISION,
+    value DOUBLE PRECISION
+) RETURNS DOUBLE PRECISION
+LANGUAGE sql
+AS $$
+    SELECT abs(($1 - $2)/$2)
+$$;
