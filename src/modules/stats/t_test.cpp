@@ -7,8 +7,9 @@
  *//* ----------------------------------------------------------------------- */
 
 #include <dbconnector/dbconnector.hpp>
-#include <modules/shared/HandleTraits.hpp>
 #include <modules/prob/prob.hpp>
+
+#include "TransitionStates.hpp"
 
 // We use string concatenation with the + operator
 #include <string>
@@ -31,47 +32,6 @@ namespace stats {
 
 struct internal : public AbstractionLayer {
     static AnyType tStatsToResult(double inT, double inDegreeOfFreedom);
-};
-
-/**
- * @brief Transition state for t-Test functions
- *
- * Note: We assume that the DOUBLE PRECISION array is initialized by the
- * database with length 6, and all elemenets are 0.
- */
-template <class Handle>
-class TTestTransitionState : public AbstractionLayer {
-public:
-    TTestTransitionState(const AnyType &inArray)
-      : mStorage(inArray.getAs<Handle>()),
-        numX(&mStorage[0]),
-        x_sum(&mStorage[1]),
-        correctedX_square_sum(&mStorage[2]),
-        numY(&mStorage[3]),
-        y_sum(&mStorage[4]),
-        correctedY_square_sum(&mStorage[5]) { }
-    
-    /**
-     * @brief Convert to backend representation
-     *
-     * We define this function so that we can use TransitionState in the argument
-     * list and as a return type.
-     */
-    inline operator AnyType() const {
-        return mStorage;
-    }
-    
-private:
-    Handle mStorage;
-
-public:
-    typename HandleTraits<Handle>::ReferenceToUInt64 numX;
-    typename HandleTraits<Handle>::ReferenceToDouble x_sum;
-    typename HandleTraits<Handle>::ReferenceToDouble correctedX_square_sum;
-
-    typename HandleTraits<Handle>::ReferenceToUInt64 numY;
-    typename HandleTraits<Handle>::ReferenceToDouble y_sum;
-    typename HandleTraits<Handle>::ReferenceToDouble correctedY_square_sum;
 };
 
 /**
@@ -202,6 +162,12 @@ AnyType
 t_test_two_pooled_final::run(AnyType &args) {
     TTestTransitionState<ArrayHandle<double> > state = args[0];
 
+    // If we haven't seen enough data, just return Null. This is the standard
+    // behavior of aggregate function (compare, e.g.,
+    // how PostgreSQL handles corr on just one row. It also returns NULL.)
+    if (state.numX < 1 || state.numY < 1 || state.numX + state.numY <= 2)
+        return Null();
+
     // Formulas taken from:
     // http://www.itl.nist.gov/div898/handbook/eda/section3/eda353.htm
     double dfEqualVar = state.numX + state.numY - 2;
@@ -223,6 +189,12 @@ t_test_two_pooled_final::run(AnyType &args) {
 AnyType
 t_test_two_unpooled_final::run(AnyType &args) {
     TTestTransitionState<ArrayHandle<double> > state = args[0];
+
+    // If we haven't seen enough data, just return Null. This is the standard
+    // behavior of aggregate function (compare, e.g.,
+    // how PostgreSQL handles corr on just one row. It also returns NULL.)
+    if (state.numX < 2 || state.numY < 2)
+        return Null();
 
     // Formulas taken from:
     // http://www.itl.nist.gov/div898/handbook/eda/section3/eda353.htm
@@ -246,12 +218,35 @@ t_test_two_unpooled_final::run(AnyType &args) {
     return internal::tStatsToResult(tUnequalVar, dfUnequalVar);
 }
 
+inline
+AnyType
+internal::tStatsToResult(double inT, double inDegreeOfFreedom) {
+    // Return t statistic, degrees of freedom, one-tailed p-value (Null
+    // hypothesis \mu <= \mu_0), and two-tailed p-value (\mu = \mu_0).
+    // Recall definition of p-value: The probability of observating a
+    // value at least as extreme as the one observed, assuming that the null
+    // hypothesis is true.
+    AnyType tuple;
+    tuple
+        << inT
+        << inDegreeOfFreedom
+        << 1. - studentT_CDF(inT, inDegreeOfFreedom)
+        << 2. * (1. - studentT_CDF(std::fabs(inT), inDegreeOfFreedom));
+    return tuple;
+}
+
 /**
  * @brief Perform the F-test final step
  */
 AnyType
 f_test_final::run(AnyType &args) {
     TTestTransitionState<ArrayHandle<double> > state = args[0];
+
+    // If we haven't seen enough data, just return Null. This is the standard
+    // behavior of aggregate function (compare, e.g.,
+    // how PostgreSQL handles corr on just one row. It also returns NULL.)
+    if (state.numX < 2 || state.numY < 2)
+        return Null();
 
     // Formulas taken from:
     // http://www.itl.nist.gov/div898/handbook/eda/section3/eda359.htm
@@ -271,23 +266,6 @@ f_test_final::run(AnyType &args) {
         << dfY
         << pvalue_one_sided
         << pvalue_two_sided;
-    return tuple;
-}
-
-inline
-AnyType
-internal::tStatsToResult(double inT, double inDegreeOfFreedom) {
-    // Return t statistic, degrees of freedom, one-tailed p-value (Null
-    // hypothesis \mu <= \mu_0), and two-tailed p-value (\mu = \mu_0).
-    // Recall definition of p-value: The probability of observating a
-    // value at least as extreme as the one observed, assuming that the null
-    // hypothesis is true.
-    AnyType tuple;
-    tuple
-        << inT
-        << inDegreeOfFreedom
-        << 1. - studentT_CDF(inT, inDegreeOfFreedom)
-        << 2. * (1. - studentT_CDF(std::fabs(inT), inDegreeOfFreedom));
     return tuple;
 }
 
