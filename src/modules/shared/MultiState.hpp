@@ -14,7 +14,10 @@ namespace modules {
  * Note: We assume that the DOUBLE PRECISION array is initialized by the
  * database with length 6, and all elemenets are 0.
  */
-template <class Handle, class State, int32_t CompileTimeNum = Dynamic>
+template <
+    class Handle,
+    template <class> class State,
+    int32_t CompileTimeNum = Dynamic>
 class MultiState : public AbstractionLayer {
 public:
     enum {
@@ -31,45 +34,32 @@ public:
         State::ValueType value;
     }
 
-    MultiState(const Handle &inHandle, uint32_t inNumStates = Dynamic);
+    MultiState(const Handle &inHandle, uint32_t inNumStates = CompileTimeNum);
+    static size_t length(uint32_t inNumStates = CompileTimeNum);
     
     size_t numStates();
-    static size_t length(uint32_t inNumStates = CompileTimeNum);
+    State<TransparentHandle>& state(uint32_t inState);
+
     void operator=(const MultiState& inState);
-    
-    State& state(uint32_t inState);
-    
-    MultiState& operator<<(const CorrectedSumOfSquares &inState);
+    MultiState& operator<<(const MultiState& inState);
     
     operator Handle() {
         return mStorage;
     }
     
-protected:
-    size_t numStates(uint32_t inNumStates) {
-        madlib_assert(
-            inNumStates == Dynamic
-            || (CompileTimeNum == Dynamic && inNumStates >= 0)
-            || (CompileTimeNum == inNumStates),
-            std::logic_error("Invalid number of states in MultiState."));
-        
-        return CompileTimeNum == Dynamic
-            ? (inNumStates == Dynamic ? mNum : inNumStates)
-            : CompileTimeNum;
-    }
-    
+protected:    
     Handle mStorage;
     typename HandleTraits<Handle>::ReferenceToUInt32 mNum;
     std::vector<State> mStates;
 };
 
-template <class Handle>
+template <class Handle, template <class> class State, int32_t CompileTimeNum>
 inline
 MultiState<Handle, State, CompileTimeNum>::MultiState(
     const Handle &inHandle,
     uint32_t inNumStates = Dynamic
 ) : mStorage(inHandle),
-    mNum(&mStorage.at[0]) {
+    mNum(&mStorage[0]) {
     
     uint32_t numStates = CompileTimeNum == Dynamic
         ? (inNumStates == Dynamic ? mNum : inNumStates)
@@ -77,8 +67,26 @@ MultiState<Handle, State, CompileTimeNum>::MultiState(
     setNumStates(numStates);
 }
 
+template <class Handle, template <class> class State, int32_t CompileTimeNum>
+inline
+size_t
+length(uint32_t inNumStates) {
+    madlib_assert(CompileTimeNum == Dynamic || CompileTimeNum == inNumStates,
+        std::invalid_argument());
+    
+    return CompileTimeNum == Dynamic
+        ? 1 + inNumStates * State::length
+        : compileTimeLength;
+}
+
+template <class Handle, template <class> class State, int32_t CompileTimeNum>
+inline
+void
 setNumStates(uint32_t inNumStates) {
-    madlib_assert(mStorage.size() >= length(inNumStates));
+    madlib_assert((CompileTimeNum == Dynamic && inNumStates >= 0)
+        || CompileTimeNum == inNumStates, std::invalid_argument());
+    madlib_assert(mStorage.size() >= length(inNumStates),
+        std::runtime_error("Insufficient storage size for MultiState."));
     
     if (mStates.size() < inNumStates) {
         for (int32_t i = mStates.size(); i < inNumStates; i++) {
@@ -88,47 +96,34 @@ setNumStates(uint32_t inNumStates) {
             mStates.insert(newState);
         }
     } else {
-        mStates.truncate(inNumStates);
+        mStates.resize(inNumStates);
     }
 }
 
-template <class Handle, class State, int32_t CompileTimeNum = Dynamic>
+template <class Handle, template <class> class State, int32_t CompileTimeNum>
 inline
 size_t
 MultiState<Handle, State, CompileTimeNum>::numStates() {
-    return numStates(Dynamic);
-}
-
-template <class Handle, class State, int32_t CompileTimeNum = Dynamic>
-inline
-size_t
-length(uint32_t inNumStates) {
     return CompileTimeNum == Dynamic
-        ? 1 + numStates(inNumStates) * State::length
-        : compileTimeLength;
+        ? mNum
+        : CompileTimeNum;
 }
 
-
-
-template <class Handle, class State, int32_t CompileTimeNum = Dynamic>
+template <class Handle, template <class> class State, int32_t CompileTimeNum>
 inline
 void
 MultiState<Handle, State, CompileTimeNum>::operator=(
     const MultiState& inState
 ) {
     setNumStates(inState.mStates.size());
-    for (iterator self = mStates.begin(), other = inState.mStates.begin();
-        it != mStates.end(); ++self, ++other)
-        *it = *other;
+    std::copy(other.mStates.begin(), other.mStates.end(), mStates.begin());
 }
 
-template <class Handle, class State, int32_t CompileTimeNum = Dynamic>
+template <class Handle, template <class> class State, int32_t CompileTimeNum>
 inline
 State& state(uint32_t inState) {
     return mStates.at(inState);
 }
-
-
 
 
 } // namespace modules
