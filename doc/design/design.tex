@@ -356,7 +356,7 @@ While the user-defined aggregate is simple enough to be implemented in plain SQL
 \chapter[k-Means Clustering]{$k$-Means Clustering}
 
 % Abstract. What is the problem we want to solve?
-Clustering refers to the problem of partitioning a set of objects into homogeneous subsets, i.e., such that objects in the same group have \emph{similar} properties. In k-means clustering,
+Clustering refers to the problem of partitioning a set of objects into homogeneous subsets, i.e., such that objects in the same group have \emph{similar} properties. In $k$-means clustering,
 one is given $n$ points $x_1, \dots, x_n \in \R^d$, and the goal is
 to position $k$ centroids $c_1, \dots, c_k \in \R^d$ so that the sum of squared
 distances between each point and its closest centroid is minimized. A cluster
@@ -581,10 +581,10 @@ The standard algorithm has been outlined in Section~\ref{sec:kmeans:Algorithms}.
 	\Repeat
 		\State $i \set i + 1$
 		\State $m_\text{old} \set m$
-		\For{$p \in P$} \label{alg:kmeans:ForReassign}
-			\State $m[p] \set \arg\min_{c \in C} \dist(p, c)$ \Comment{Break ties arbitrarily}
-		\EndFor
-		\State $C \set \bigcup_{c \in C} \{ \operatorname{avg}_{p \in P \mid m[p] = c} p \}$ \label{alg:kmeans:MoveCentroids}
+%		\For{$p \in P$} \label{alg:kmeans:ForReassign}
+%			\State $m[p] \set \arg\min_{c \in C} \dist(p, c)$ \Comment{Break ties arbitrarily}
+%		\EndFor
+		\State $C \set \bigcup_{c \in C} \{ \operatorname{avg} \{p \in P \mid \arg\min_{c' \in C} \dist(p, c') = c \} \}$ \label{alg:kmeans:MoveCentroids}
 		\State $C \set C \cup \mathit{Seeding}(k - |C|, P, \dist)$ \label{alg:kmeans:Reseed}
 	\Until{$Convergence(m_\text{old}, m, i)$} \label{alg:kmeans:ConvergenceCond}
 \end{algorithmic}
