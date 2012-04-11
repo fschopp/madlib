@@ -11,58 +11,52 @@ namespace modules {
 /**
  * @brief Compute the sums of squared differences from mean (total squared
  *     errors)
- *
- * Note: We assume that the DOUBLE PRECISION array is initialized by the
- * database with length 6, and all elemenets are 0.
  */
 template <class Handle>
 class CorrectedSumOfSquares : public AbstractionLayer {
 public:
     typedef double ValueType;
     enum {
-        compileTimeLength = 3;
+        compileTimeLength = 24;
     }
 
     CorrectedSumOfSquares(const Handle &inHandle)
       : mStorage(inHandle),
-        count(&mStorage[0]),
-        sum(&mStorage[1]),
-        correctedSquareSum(&mStorage.at(2)) { }
-    
-    size_t length() const {
-        return compileTimeLength;
+        mCount(*static_cast<uint64_t*>(&mStorage[0])),
+        mSum(*static_cast<double*>(&mStorage[8])),
+        mCorrectedSumSquares(*static_cast<double*>(&mStorage[16])) {
+        
+        madlib_assert(mStorage.size() >= compileTimeLength);
     }
-
+    
+    static size_t length() { return compileTimeLength; }
+    
+    CorrectedSumOfSquares& operator=(const CorrectedSumOfSquares& inState);
     CorrectedSumOfSquares& operator<<(ValueType inValue);
     CorrectedSumOfSquares& operator<<(const CorrectedSumOfSquares &inState);
     
-    operator Handle() {
-        return mStorage;
-    }
-    
-    void init() {
-        std::fill(mStorage.begin(), mStorage.end(), 0);
-    }
-    
-    void operator=(const CorrectedSumOfSquares& inState) {
-        std::copy(inState.mStorage.begin(), inState.mStorage.end(),
-            mStorage.begin());
-    }
-    
-    uint64_t count() const;
-    double sum() const;
-    double correctedSumSquares() const;
-    double degreeOfFreedom() const;
+    operator Handle() { return mStorage; }
+    uint64_t count() const { return mCount; }
+    double sum() const { return mSum; }
+    double correctedSumSquares() const { return mCorrectedSumSquares; }
+    double populationVariance() const;
     double sampleVariance() const;
 
 protected:
     update(uint64_t inCount, double inSum, double inCorrectedSumSquares);
 
     Handle mStorage;
-    typename HandleTraits<Handle>::ReferenceToUInt64 mCount;
-    typename HandleTraits<Handle>::ReferenceToDouble mSum;
-    typename HandleTraits<Handle>::ReferenceToDouble mCorrectedSumSquares;
+    uint64_t &mCount;
+    double &mSum;
+    double &mCorrectedSumSquares;
 };
+
+template <class Handle>
+inline
+CorrectedSumOfSquares<Handle>&
+CorrectedSumOfSquares<Handle>::operator=(const CorrectedSumOfSquares& inState) {
+    mStorage = inState.mStorage;
+}
 
 template <class Handle>
 inline
@@ -84,30 +78,16 @@ CorrectedSumOfSquares<Handle>::operator<<(
 
 template <class Handle>
 inline
-uint64_t
-CorrectedSumOfSquares<Handle>::count() const {
-    return mCount;
-}
-
-template <class Handle>
-inline
-double
-CorrectedSumOfSquares<Handle>::sum() const {
-    return mSum;
-}
-
-template <class Handle>
-inline
-double
-CorrectedSumOfSquares<Handle>::correctedSumSquares() const {
-    return mCorrectedSumSquares;
-}
-
-template <class Handle>
-inline
 double
 CorrectedSumOfSquares<Handle>::sampleVariance() const {
-    return mCorrectedSumSquares / degreeOfFreedom();
+    return mCorrectedSumSquares / (mCount - 1.);
+}
+
+template <class Handle>
+inline
+double
+CorrectedSumOfSquares<Handle>::populationVariance() const {
+    return mCorrectedSumSquares / mCount;
 }
 
 /**

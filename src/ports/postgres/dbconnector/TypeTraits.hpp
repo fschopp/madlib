@@ -37,6 +37,24 @@
     DECLARE_OID(_oid, _type)
 
 DECLARE_OID_TO_TYPE_MAPPING(
+    BYTEAOID,
+    AbstractionLayer::ByteStringHandle,
+    dbal::SimpleType,
+    dbal::Immutable,
+    PointerGetDatum(value.byteString()),
+    DatumGetByteaP(value)
+);
+DECLARE_OID_TO_TYPE_MAPPING(
+    BYTEAOID,
+    AbstractionLayer::MutableByteStringHandle,
+    dbal::SimpleType,
+    dbal::Mutable,
+    PointerGetDatum(value.byteString()),
+    needMutableClone
+        ? reinterpret_cast<bytea*>(PG_DETOAST_DATUM_COPY(value))
+        : DatumGetByteaP(value)
+);
+DECLARE_OID_TO_TYPE_MAPPING(
     FLOAT8OID,
     double,
     dbal::SimpleType,
@@ -93,10 +111,9 @@ DECLARE_CXX_TYPE(
     dbal::ArrayType,
     dbal::Mutable,
     PointerGetDatum(value.array()),
-    reinterpret_cast<ArrayType*>(
-        needMutableClone
-          ? DatumGetArrayTypePCopy(value)
-          : DatumGetArrayTypeP(value))
+    needMutableClone
+      ? DatumGetArrayTypePCopy(value)
+      : DatumGetArrayTypeP(value)
 );
 
 #undef DECLARE_OID_TO_TYPE_MAPPING

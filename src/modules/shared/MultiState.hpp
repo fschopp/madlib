@@ -47,7 +47,9 @@ public:
         return mStorage;
     }
     
-protected:    
+protected:
+    setNumStates(uint32_t inNumStates);
+
     Handle mStorage;
     typename HandleTraits<Handle>::ReferenceToUInt32 mNum;
     std::vector<State> mStates;
@@ -87,11 +89,15 @@ setNumStates(uint32_t inNumStates) {
         || CompileTimeNum == inNumStates, std::invalid_argument());
     madlib_assert(mStorage.size() >= length(inNumStates),
         std::runtime_error("Insufficient storage size for MultiState."));
+    BOOST_STATIC_ASSERT(State::compileTimeLength > 0,
+        "MultiState does not yet support variable-length states.");
     
     if (mStates.size() < inNumStates) {
         for (int32_t i = mStates.size(); i < inNumStates; i++) {
-            State newState(
-                &mStorage[(CompileTimeNum == Dynamic) + i * State::length]);
+            State newState(TransparentHandle(
+                &mStorage[(CompileTimeNum == Dynamic) * 16
+                    + i * State::compileTimeLength],
+                State::compileTimeLength));
             
             mStates.insert(newState);
         }

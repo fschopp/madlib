@@ -18,13 +18,15 @@ class AbstractionLayer::TransparentHandle {
 public:
     enum { isMutable = false };
 
-    TransparentHandle(const T* inPtr)
-      : mPtr(const_cast<T*>(inPtr)) { }
+    TransparentHandle(const T* inPtr, size_t inSize)
+      : mPtr(const_cast<T*>(inPtr)), mSize(inSize) { }
     
     const T* ptr() const;
-        
+    size_t size() const;
+    
 protected:
     T *mPtr;
+    size_t mSize;
 };
 
 /**
@@ -39,15 +41,12 @@ class AbstractionLayer::MutableTransparentHandle
 public:
     enum { isMutable = true };
 
-    MutableTransparentHandle(T* inPtr)
-      : Base(inPtr) { }
+    MutableTransparentHandle(T* inPtr, size_t inSize)
+      : Base(inPtr, inSize) { }
     
     // Import the const version as well
     using Base::ptr;
     T* ptr();
-
-protected:
-    using Base::mPtr;
 };
 
 #endif // MADLIB_DBCONNECTOR_HPP (workaround for Doxygen)
