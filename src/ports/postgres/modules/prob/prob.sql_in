@@ -420,8 +420,8 @@ IMMUTABLE STRICT;
  * @brief Weibull cumulative distribution function
  *
  * @param x Random variate \f$ x \f$
- * @param shape Shape \f$ shape > 0 \f$
- * @param scale Scale \f$ scale > 0 \f$
+ * @param shape The shape parameter \f$ shape > 0 \f$
+ * @param scale The scale parameter \f$ scale > 0 \f$
  * @return \f$ \Pr[X \leq x] \f$ where \f$ X \f$ is a weibull distributed random
  *     variable with parameters \f$ scale \f$ and \f$ shape \f$
  */
@@ -438,8 +438,8 @@ IMMUTABLE STRICT;
  * @brief Weibull probability density function
  *
  * @param x Random variate \f$ x \f$
- * @param shape Shape \f$ shape > 0 \f$
- * @param scale Scale \f$ scale > 0 \f$
+ * @param shape The shape parameter \f$ shape > 0 \f$
+ * @param scale The scale parameter \f$ scale > 0 \f$
  * @return \f$ f(x) \f$ where \f$ f \f$ is the probability density function of
  *     a weibull distributed random variable with parameters \f$ scale \f$ and \f$ shape \f$
  */
@@ -456,8 +456,8 @@ IMMUTABLE STRICT;
  * @brief Weibull quantile function
  *
  * @param p Probability f$ p \in [0,1] \f$
- * @param shape Shape \f$ shape > 0 \f$
- * @param scale Scale \f$ scale > 0 \f$
+ * @param shape The shape parameter \f$ shape > 0 \f$
+ * @param scale The scale parameter \f$ scale > 0 \f$
  * @return \f$ x \f$ such that \f$ p = \Pr[X \leq x] \f$ where \f$ X \f$ is a
  *     weibull distributed random variable with parameters \f$ scale \f$ and \f$ shape \f$
  */
@@ -537,13 +537,13 @@ IMMUTABLE STRICT;
  * @brief Rayleigh cumulative distribution function
  *
  * @param x Random variate \f$ x \f$
- * @param shape The shape \f$ shape > 0 \f$
+ * @param scale The scale parameter \f$ scale > 0 \f$
  * @return \f$ \Pr[X \leq x] \f$ where \f$ X \f$ is a rayleigh distributed random
- *     variable with parameter \f$ shape \f$
+ *     variable with parameter \f$ scale \f$
  */
 CREATE FUNCTION MADLIB_SCHEMA.rayleigh_cdf(
     x DOUBLE PRECISION,
-    shape DOUBLE PRECISION
+    scale DOUBLE PRECISION
 ) RETURNS DOUBLE PRECISION
 AS 'MODULE_PATHNAME'
 LANGUAGE C
@@ -553,14 +553,14 @@ IMMUTABLE STRICT;
  * @brief Rayleigh probability density function
  *
  * @param x Random variate \f$ x \f$
- * @param shape The shape \f$ shape > 0 \f$
+ * @param scale The scale parameter \f$ scale > 0 \f$
  * @return \f$ f(x) \f$ where \f$ f \f$ is the probability density function of
- *     a rayleigh distributed random variable with parameter shape
+ *     a rayleigh distributed random variable with parameter scale
  *     freedom
  */
 CREATE FUNCTION MADLIB_SCHEMA.rayleigh_pdf(
     x DOUBLE PRECISION,
-    shape DOUBLE PRECISION
+    scale DOUBLE PRECISION
 ) RETURNS DOUBLE PRECISION
 AS 'MODULE_PATHNAME'
 LANGUAGE C
@@ -570,13 +570,13 @@ IMMUTABLE STRICT;
  * @brief Rayleigh quantile function
  *
  * @param p Probability f$ p \in [0,1] \f$
- * @param shape The shape \f$ shape > 0 \f$
+ * @param scale The scale parameter \f$ scale > 0 \f$
  * @return \f$ x \f$ such that \f$ p = \Pr[X \leq x] \f$ where \f$ X \f$ is a
- *     rayleigh distributed random variable with parameter \f$ shape \f$
+ *     rayleigh distributed random variable with parameter \f$ scale \f$
  */
 CREATE FUNCTION MADLIB_SCHEMA.rayleigh_quantile(
     x DOUBLE PRECISION,
-    shape DOUBLE PRECISION
+    scale DOUBLE PRECISION
 ) RETURNS DOUBLE PRECISION
 AS 'MODULE_PATHNAME'
 LANGUAGE C
@@ -754,8 +754,8 @@ IMMUTABLE STRICT;
  * @brief Gamma cumulative distribution function
  *
  * @param x Random variate \f$ x \f$
- * @param shape Shape \f$ shape > 0 \f$
- * @param scale Scale \f$ scale > 0 \f$
+ * @param shape The shape parameter \f$ shape > 0 \f$
+ * @param scale The scale parameter \f$ scale > 0 \f$
  * @return \f$ \Pr[X \leq x] \f$ where \f$ X \f$ is a gamma distributed random
  *     variable with parameters \f$ scale \f$ and \f$ shape \f$
  */
@@ -772,8 +772,8 @@ IMMUTABLE STRICT;
  * @brief Gamma probability density function
  *
  * @param x Random variate \f$ x \f$
- * @param shape Shape \f$ shape > 0 \f$
- * @param scale Scale \f$ scale > 0 \f$
+ * @param shape The shape parameter \f$ shape > 0 \f$
+ * @param scale The scale parameter \f$ scale > 0 \f$
  * @return \f$ f(x) \f$ where \f$ f \f$ is the probability density function of
  *     a gamma distributed random variable with parameters \f$ scale \f$ and \f$ shape \f$
  */
@@ -790,8 +790,8 @@ IMMUTABLE STRICT;
  * @brief Gamma quantile function
  *
  * @param p Probability f$ p \in [0,1] \f$
- * @param shape Shape \f$ shape > 0 \f$
- * @param scale Scale \f$ scale > 0 \f$
+ * @param shape The shape parameter \f$ shape > 0 \f$
+ * @param scale The scale parameter \f$ scale > 0 \f$
  * @return \f$ x \f$ such that \f$ p = \Pr[X \leq x] \f$ where \f$ X \f$ is a
  *     gamma distributed random variable with parameters \f$ scale \f$ and \f$ shape \f$
  */
@@ -1182,8 +1182,8 @@ IMMUTABLE STRICT;
  * @brief Inverse Gamma cumulative distribution function
  *
  * @param x Random variate \f$ x > 0 \f$
- * @param shape Shape \f$ shape > 0 \f$
- * @param scale Scale \f$ scale > 0 \f$
+ * @param shape The shape parameter \f$ shape > 0 \f$
+ * @param scale The scale parameter \f$ scale > 0 \f$
  * @return \f$ \Pr[X \leq x] \f$ where \f$ X \f$ is a inverse gamma distributed random
  *     variable with parameters \f$ scale \f$ and \f$ shape \f$
  */
@@ -1200,8 +1200,8 @@ IMMUTABLE STRICT;
  * @brief Inverse Gamma probability density function
  *
  * @param x Random variate \f$ x > 0 \f$
- * @param shape Shape \f$ shape > 0 \f$
- * @param scale Scale \f$ scale > 0 \f$
+ * @param shape The shape parameter \f$ shape > 0 \f$
+ * @param scale The scale parameter \f$ scale > 0 \f$
  * @return \f$ f(x) \f$ where \f$ f \f$ is the probability density function of
  *     a inverse gamma distributed random variable with parameters \f$ scale \f$ and \f$ shape \f$
  */
@@ -1218,8 +1218,8 @@ IMMUTABLE STRICT;
  * @brief Inverse Gamma quantile function
  *
  * @param p Probability f$ p \in (0,1] \f$
- * @param shape Shape \f$ shape > 0 \f$
- * @param scale Scale \f$ scale > 0 \f$
+ * @param shape The shape parameter \f$ shape > 0 \f$
+ * @param scale The scale parameter \f$ scale > 0 \f$
  * @return \f$ x \f$ such that \f$ p = \Pr[X \leq x] \f$ where \f$ X \f$ is a
  *     inverse gamma distributed random variable with parameters \f$ scale \f$ and \f$ shape \f$
  */
