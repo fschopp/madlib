@@ -1,6 +1,6 @@
 /* -----------------------------------------------------------------------------
  * Test ANOVA.
- * 
+ *
  * Example taken from:
  * http://www.itl.nist.gov/div898/handbook/prc/section4/prc433.htm
  * -------------------------------------------------------------------------- */
@@ -20,7 +20,7 @@ COPY nist_anova_test(resistance) FROM stdin;
 
 CREATE TABLE one_way_anova_nist AS
 SELECT (one_way_anova(level, value)).* FROM (
-    SELECT level, resistance[level] AS value
+    SELECT level::INT2, resistance[level] AS value
     FROM
         nist_anova_test, (
         SELECT * FROM generate_series(1,3) level
