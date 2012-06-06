@@ -802,7 +802,7 @@ CREATE TYPE MADLIB_SCHEMA.one_way_anova_result AS (
 
 CREATE OR REPLACE FUNCTION MADLIB_SCHEMA.one_way_anova_transition(
     state DOUBLE PRECISION[],
-    "group" INTEGER,
+    "group" INT2,
     value DOUBLE PRECISION)
 RETURNS DOUBLE PRECISION[]
 AS 'MODULE_PATHNAME'
@@ -879,7 +879,7 @@ LANGUAGE C IMMUTABLE STRICT;
  *    <pre>SELECT (one_way_anova(<em>group</em>, <em>value</em>)).* FROM <em>source</em></pre>
  */
 CREATE AGGREGATE MADLIB_SCHEMA.one_way_anova(
-    /*+ group */ INTEGER,
+    /*+ group */ INT2,
     /*+ value */ DOUBLE PRECISION) (
 
     SFUNC=MADLIB_SCHEMA.one_way_anova_transition,
