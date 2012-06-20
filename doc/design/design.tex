@@ -31,7 +31,8 @@
 \usepackage{tabularx}
 \usepackage{xspace}                    % Correct spaces after \newcommand definitions
 \usepackage[noend]{algpseudocode}      % algorithm environment
-\usepackage{minted}
+% \usepackage{minted}
+\usepackage{listings}						% replacing minted
 
 
 % BEGIN Doc Layout
@@ -157,15 +158,23 @@
 	% END Algorithms
 
 	% BEGIN Listing environments
-	\newminted{sql}{mathescape,
-					numbersep=5pt,
-					tabsize=4,
-					gobble=8,
-					framesep=2mm,
-					xleftmargin=\leftmargini
-					}
+%	\newminted{sql}{mathescape,
+%					numbersep=5pt,
+%					tabsize=4,
+%					gobble=8,
+%					framesep=2mm,
+%					xleftmargin=\leftmargini
+%					}
 	% END Listing environments
 % END General Definitions
+\lstset{
+				language=SQL,
+				numbers=right, 
+            numberstyle=\tiny, 
+            breaklines=true,
+            numbersep=5pt,
+            xleftmargin=.25in,
+            xrightmargin=.25in} 
 
 \bibliography{../literature.bib}
 
@@ -226,9 +235,9 @@ Note that the bound on $\mu$ does not depend on $n$. So in expectation, only $O(
 \subsubsection{Implementation in SQL}
 
 In real-world DBMSs, probabilistic sampling has the advantage that it is trivially data-parallel. Discarding excessive items can be done using the well-known \texttt{ORDER BY random() LIMIT} idiom. Tests show that PostgreSQL is very efficient in doing the sorting (today's CPUs can easily sort 1 million numbers in less than a couple hundred milliseconds). In fact, the sorting cost is almost not measurable if the sample size is only at the scale of several million or less. Since \texttt{ORDER BY random() LIMIT} is an often-used idiom, there is also hope that advanced optimizers might give it special treatment. Put together, in order to sample $m$ random rows uniformly at random, we write:
-\begin{sqlcode}
+\begin{lstlisting}[language=SQL]
 	SELECT * FROM list WHERE random() < p ORDER BY random() LIMIT m
-\end{sqlcode}
+\end{lstlisting}
 If necessary, checks can be added that indeed $m$ rows have been selected.
 
 
@@ -534,17 +543,17 @@ The return value of \ref{sym:kmeans++} is an array of centroids of type sparse v
 \paragraph{Components} The set of centroids $C$ is stored as an array of sparse vectors. Algoritm~\ref{alg:kmeans++ext} can be translated into SQL in a straightforward fashion. Unfortunately, PostgreSQL and Greenplum do not support an \texttt{UPDATE} statement that returns an aggregate (i.e., \ref{sym:discrete_sample}), so we cannot implement the aforementioned tuning.
 
 The inner for-loop in line~\ref{alg:kmeans++ext:pointLoop} becomes:
-\begin{sqlcode}
+\begin{lstlisting}[language=SQL]
 	UPDATE points
 	SET centroid_id = last_centroid,
 	    centroid_dist = dist(coords, last_centroid)
 	WHERE
 	    dist(coords, last_centroid) < centroid_dist
-\end{sqlcode}
+\end{lstlisting}
 Lines~\ref{alg:kmeans++ext:firstCentroid} and \ref{alg:kmeans++ext:nextCentroid} are implemented using \ref{sym:discrete_sample}. That is, \texttt{last\_centroid} is set to the output of:
-\begin{sqlcode}
+\begin{lstlisting}[language=SQL]
 	SELECT discrete_sample(id, centroid_dist^2) FROM points
-\end{sqlcode}
+\end{lstlisting}
 
 \subsubsection{Historical Implementations}
 
@@ -670,18 +679,18 @@ The return value of \ref{sym:kmeans++} is an array of centroids of type sparse v
 \paragraph{Components}
 
 The set of centroids $C$ is stored as an array of sparse vectors \texttt{centroids}. Algoritm~\ref{alg:kmeans} can be translated into SQL in a straightforward fashion. The point-reassignment phase in the inner for-loop in line~\ref{alg:kmeans:ForReassign} becomes
-\begin{sqlcode}
+\begin{lstlisting}[language=SQL]
 	UPDATE points SET centroid_id = closest_centroid(centroids, coords, dist)
-\end{sqlcode}
+\end{lstlisting}
 Here, \texttt{closest\_centroid} is a simple function that takes an array of sparse vectors, a sparse vector, and a metric. It returns the index of the closest vector in the array. \todo{With higher-order constructs we can avoid the need for specialized functions and express this much more elegantly. While SQL makes this hard, we should still think about ways that make this possible.}
 
 Likewise, moving the centroids in line~\ref{alg:kmeans:MoveCentroids} is implemented as follows.
-\begin{sqlcode}
+\begin{lstlisting}[language=SQL]
 	CREATE TEMPORARY TABLE updated_centroids AS
 	SELECT centroid_id, avg(coords) FROM points GROUP BY centroid_id
-\end{sqlcode}
+\end{lstlisting}
 Since there might be stray centroids now, \texttt{updated\_centroids} may have less than $k$ rows. As in line~\ref{alg:kmeans:Reseed}, we therefore call the $\texttt{seeding}$ function again and store the returned array of centroids in \texttt{reseeded}. Unfortunately, some fiddling is necessary to assign the vacant \texttt{centroid\_id}s among the the centroids in \texttt{reseeded}:
-\begin{sqlcode}
+\begin{lstlisting}[language=SQL]
 	INSERT INTO updated_centroids
 	SELECT centroid_id, reseeded[sub_id] AS coords
 	FROM (
@@ -692,11 +701,11 @@ Since there might be stray centroids now, \texttt{updated\_centroids} may have l
 	        SELECT centroid_id FROM updated_centroids
 	    ) vacant_ids
 	) vacant_ids_with_sub_ids
-\end{sqlcode}
+\end{lstlisting}
 The centroids are then converted to an array again:
-\begin{sqlcode}
+\begin{lstlisting}[language=SQL]
 	SELECT array_agg(coords ORDER BY centroid_id) FROM updated_centroids
-\end{sqlcode}
+\end{lstlisting}
 
 
 \section{Variants}
@@ -760,10 +769,10 @@ This body of work enables us to solve the problem by using gradient-based line s
 		\State $U_\text{old} \set U$
 		\State $V_\text{old} \set V$
 		\For{$(x, y, a) \in A$}
-			\State $err \set U_x \cdot V_y - a$
+			\State $e \set U_x \cdot V_y - a$
 			\State $temp \set U_x$
-			\State $temp \set U_x - \alpha err V_y$
-			\State $V_y \set V_y - \alpha err U_x$
+			\State $temp \set U_x - \alpha e V_y$
+			\State $V_y \set V_y - \alpha e U_x$
 			\State $U_x \set temp$
 		\EndFor
 	\Until{$Convergence(U_\text{old}, V_\text{old}, U, V, i)$}
