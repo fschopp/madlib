@@ -171,6 +171,10 @@ Since the fold/reduce computational model is so ubiquitous and we anticipate the
 
 \subsubsection[Class HandleMap]{Class \symlabel{HandleMap}{sym:HandleMap}}
 
+\ref{sym:HandleMap} is a lightweight wrapper around \texttt{Eigen::Map}. Objects of type \ref{sym:HandleMap} represent an Eigen matrix or vector that uses existing memory to store its elements (i.e., memory that is external to the \ref{sym:HandleMap} object). \ref{sym:HandleMap} objects can be initialized with objects from classes conforming to the \ref{sym:ContiguousDataHandle} concept, and they can be arbitrarily rebound a different target in memory.
+
+\ref{sym:HandleMap} meets the requirements of \ref{sym:Rebindable}.
+
 \paragraph{Requirements}
 
 \begin{itemize}
@@ -185,7 +189,7 @@ Since the fold/reduce computational model is so ubiquitous and we anticipate the
 	\item \texttt{Index}: \texttt{EigenType::Index}
 \end{itemize}
 
-\paragraph{Member functions}
+\paragraph{Member Functions}
 
 \begin{itemize}
 	\item
@@ -232,6 +236,35 @@ Since the fold/reduce computational model is so ubiquitous and we anticipate the
 \subsection{Resource-Management Shims}
 
 \subsubsection[Class Allocator]{Class \symlabel{Allocator}{sym:Allocator}}
+
+\paragraph{Member Functions}
+
+\begin{itemize}
+	\item
+		\begin{cppsnippet}
+		template <typename T>
+		MutableArrayHandle<T> allocateArray(inDim1, ..., inDimn) const
+		\end{cppsnippet}
+	
+	\item
+		\begin{cppsnippet}
+		template <MemoryContext MC, ZeroMemory ZM, OnMemoryAllocationFailure F>
+		void* allocate(const size_t inSize) const;
+		\end{cppsnippet}
+
+	\item
+		\begin{cppsnippet}
+		template <MemoryContext MC, ZeroMemory ZM, OnMemoryAllocationFailure F>
+		void* reallocate(void *inPtr, const size_t inSize) const;
+		\end{cppsnippet}
+	
+	\item
+		\begin{cppsnippet}
+		template <dbal::MemoryContext MC>
+		void free(void *inPtr) const;
+		\end{cppsnippet}
+\end{itemize}
+
 
 \paragraph{Member functions}
 
